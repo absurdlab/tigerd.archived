@@ -9,47 +9,47 @@ import (
 
 func TestResponseTypeSet_MarshalJSON(t *testing.T) {
 	type container struct {
-		Value *spec.ResponseTypeSet `json:"value,omitempty"`
+		Value spec.ResponseTypeSet `json:"value,omitempty"`
 	}
 
 	cases := []struct {
 		name   string
-		set    *spec.ResponseTypeSet
+		set    spec.ResponseTypeSet
 		expect string
 	}{
 		{
 			name:   "code",
-			set:    spec.NewResponseTypeSet(spec.ResponseTypeCode),
+			set:    spec.ResponseTypeSet(0).Add(spec.ResponseTypeCode),
 			expect: `{"value": "code"}`,
 		},
 		{
 			name:   "token",
-			set:    spec.NewResponseTypeSet(spec.ResponseTypeToken),
+			set:    spec.ResponseTypeSet(0).Add(spec.ResponseTypeToken),
 			expect: `{"value": "token"}`,
 		},
 		{
 			name:   "id_token",
-			set:    spec.NewResponseTypeSet(spec.ResponseTypeIDToken),
+			set:    spec.ResponseTypeSet(0).Add(spec.ResponseTypeIDToken),
 			expect: `{"value": "id_token"}`,
 		},
 		{
 			name:   "code token",
-			set:    spec.NewResponseTypeSet(spec.ResponseTypeCode, spec.ResponseTypeToken),
+			set:    spec.ResponseTypeSet(0).Add(spec.ResponseTypeCode, spec.ResponseTypeToken),
 			expect: `{"value": "code token"}`,
 		},
 		{
 			name:   "code id_token",
-			set:    spec.NewResponseTypeSet(spec.ResponseTypeCode, spec.ResponseTypeIDToken),
+			set:    spec.ResponseTypeSet(0).Add(spec.ResponseTypeCode, spec.ResponseTypeIDToken),
 			expect: `{"value": "code id_token"}`,
 		},
 		{
 			name:   "token id_token",
-			set:    spec.NewResponseTypeSet(spec.ResponseTypeToken, spec.ResponseTypeIDToken),
+			set:    spec.ResponseTypeSet(0).Add(spec.ResponseTypeToken, spec.ResponseTypeIDToken),
 			expect: `{"value": "token id_token"}`,
 		},
 		{
 			name:   "code token id_token",
-			set:    spec.NewResponseTypeSet(spec.ResponseTypeCode, spec.ResponseTypeToken, spec.ResponseTypeIDToken),
+			set:    spec.ResponseTypeSet(0).Add(spec.ResponseTypeCode, spec.ResponseTypeToken, spec.ResponseTypeIDToken),
 			expect: `{"value": "code token id_token"}`,
 		},
 	}
@@ -62,7 +62,7 @@ func TestResponseTypeSet_MarshalJSON(t *testing.T) {
 
 			var dest container
 			assert.NoError(t, json.Unmarshal(raw, &dest))
-			assert.Equal(t, c.set.UInt8(), dest.Value.UInt8())
+			assert.Equal(t, c.set, dest.Value)
 		})
 	}
 }

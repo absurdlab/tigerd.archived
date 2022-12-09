@@ -36,15 +36,6 @@ func (t ResponseType) String() string {
 	}
 }
 
-// NewResponseTypeSet creates a new ResponseTypeSet with given response types set in it.
-func NewResponseTypeSet(responseType ...ResponseType) *ResponseTypeSet {
-	set := ResponseTypeSet(0).Ref()
-	for _, t := range responseType {
-		set.Add(t)
-	}
-	return set
-}
-
 // ResponseTypeSet is a bitmask of zero or more ResponseType that models multi response type format. It is distinct
 // from an array of ResponseType. Instead, it marshals into a space delimited string containing multiple response
 // type values.
@@ -54,17 +45,38 @@ func (s ResponseTypeSet) UInt8() uint8 {
 	return uint8(s)
 }
 
-func (s ResponseTypeSet) Ref() *ResponseTypeSet {
-	return &s
-}
-
 func (s ResponseTypeSet) Contains(t ResponseType) bool {
 	return s.UInt8()&t.UInt8() != 0
 }
 
-func (s *ResponseTypeSet) Add(t ResponseType) *ResponseTypeSet {
-	*s = ResponseTypeSet(s.UInt8() | t.UInt8())
-	return s
+// Add adds given response types to this set and returns the updated set value. Note caller must record the returned
+// value to complete the Add, or it is lost.
+func (s ResponseTypeSet) Add(responseType ...ResponseType) ResponseTypeSet {
+	v := s
+	for _, t := range responseType {
+		v = ResponseTypeSet(v.UInt8() | t.UInt8())
+	}
+	return v
+}
+
+// AddValues adds given response type values to this set and returns the updated set value, or an error if any value
+// is not a valid response type value. Note caller must record the returned value to complete the AddValues, or it is
+// lost.
+func (s ResponseTypeSet) AddValues(value ...string) (ResponseTypeSet, error) {
+	v := s
+	for _, each := range value {
+		switch each {
+		case responseTypeCode:
+			v = v.Add(ResponseTypeCode)
+		case responseTypeToken:
+			v = v.Add(ResponseTypeToken)
+		case responseTypeIDToken:
+			v = v.Add(ResponseTypeIDToken)
+		default:
+			return 0, fmt.Errorf("invalid value for spec.ResponseType: [%s]", each)
+		}
+	}
+	return v, nil
 }
 
 func (s ResponseTypeSet) MarshalJSON() ([]byte, error) {
@@ -82,29 +94,19 @@ func (s ResponseTypeSet) MarshalJSON() ([]byte, error) {
 	return json.Marshal(strings.Join(values, " "))
 }
 
-func (s *ResponseTypeSet) UnmarshalJSON(bytes []byte) error {
+func (s *ResponseTypeSet) UnmarshalJSON(bytes []byte) (err error) {
 	var value string
-	if err := json.Unmarshal(bytes, &value); err != nil {
-		return nil
+
+	err = json.Unmarshal(bytes, &value)
+	if err != nil {
+		return
 	}
 
-	value = strings.TrimSpace(value)
 	if len(value) == 0 {
-		return nil
+		return
 	}
 
-	for _, elem := range strings.Split(value, " ") {
-		switch elem {
-		case responseTypeCode:
-			s.Add(ResponseTypeCode)
-		case responseTypeToken:
-			s.Add(ResponseTypeToken)
-		case responseTypeIDToken:
-			s.Add(ResponseTypeIDToken)
-		default:
-			return fmt.Errorf("invalid spec.ResponseType value [%s]", elem)
-		}
-	}
+	*s, err = ResponseTypeSet(0).AddValues(strings.Split(value, " ")...)
 
-	return nil
+	return
 }
