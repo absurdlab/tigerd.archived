@@ -36,6 +36,10 @@ func (t ResponseType) String() string {
 	}
 }
 
+func (t ResponseType) ToSet() ResponseTypeSet {
+	return ResponseTypeSet(0).Add(t)
+}
+
 // ResponseTypeSet is a bitmask of zero or more ResponseType that models multi response type format. It is distinct
 // from an array of ResponseType. Instead, it marshals into a space delimited string containing multiple response
 // type values.
