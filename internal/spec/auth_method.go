@@ -22,6 +22,24 @@ const (
 // AuthenticationMethod represents the values of token_endpoint_auth_method specified in OAuth 2.0 and OpenID Connect 1.0.
 type AuthenticationMethod uint8
 
+func (m AuthenticationMethod) RequiresSigning() bool {
+	switch m {
+	case ClientSecretJWT, PrivateKeyJWT:
+		return true
+	default:
+		return false
+	}
+}
+
+func (m AuthenticationMethod) RequiresSecret() bool {
+	switch m {
+	case ClientSecretBasic, ClientSecretPost, ClientSecretJWT:
+		return true
+	default:
+		return false
+	}
+}
+
 func (m AuthenticationMethod) String() string {
 	switch m {
 	case NoAuthenticationMethod:
