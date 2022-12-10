@@ -1,3 +1,5 @@
+github.com/Southclaws/fault v0.5.0 h1:1XIYR3xBy3f3DO+XFLKKRwNoXGSkAEVslqdNGlsIfDo=
+github.com/Southclaws/fault v0.5.0/go.mod h1:ykAz97glbxwopwRqAPfQMy8/Y4O+s3c6YtXwaSbxnEg=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
