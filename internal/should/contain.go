@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	_ validation.Rule = (*ContainRule)(nil)
+	_ validation.Rule = (*ContainRule[string])(nil)
 )
 
 // Contain returns a validation rule to check if the slice value contains the required elements. The rule ignores
