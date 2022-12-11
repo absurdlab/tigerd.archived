@@ -5,8 +5,8 @@ go 1.18
 require (
 	github.com/Southclaws/fault v0.5.0
 	github.com/go-jose/go-jose/v3 v3.0.0
-	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
+	github.com/oklog/ulid/v2 v2.1.0
 	github.com/samber/lo v1.36.0
 	github.com/stretchr/testify v1.8.1
 )
