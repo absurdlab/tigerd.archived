@@ -1,0 +1,257 @@
+syntax = "proto3";
+
+package provider.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
+
+// ProviderService is invoked by the server to talk to the provider when it requires End-User data or decisions. This
+// happens during the /oauth/authorize call.
+//
+// For all methods defined in this service, both synchronous (sync) and asynchronous (async) responses are supported.
+// Sync modes are used when the provider can respond without End-User interaction. For example, the test provider can
+// return a baked-in authentication in all circumstances. In most situations, async modes are used to return a
+// redirection, which instructs the tigerd service to respond with an HTTP redirection. For example, the provider may
+// need to redirect the End-User to custom login page, or a downstream identity provider.
+service ProviderService {
+  // Login requests the provider to login the End-User and report its authentication information.
+  rpc Login(LoginRequest) returns (LoginResponse) {}
+
+  // SelectAccount requests the provider to select one of the provided authentication and report the choice. The
+  // selected authentication will be used as the user authentication for the rest of the OAuth/OIDC lifecycle.
+  rpc SelectAccount(SelectAccountRequest) returns (SelectAccountResponse) {}
+
+  // Consent requests the provider to grant the requested scopes. Scopes that were implicitly granted by historical
+  // grant records are not presented to this method.
+  rpc Consent(ConsentRequest) returns (ConsentResponse) {}
+}
+
+// CallbackService is invoked by the provider to communicate End-User interaction results to the server.
+service CallbackService {
+  // CallbackLogin reports login result to server.
+  rpc CallbackLogin(CallbackLoginRequest) returns (CallbackLoginResponse) {}
+
+  // CallbackSelectAccount reports the select account result to server.
+  rpc CallbackSelectAccount(CallbackSelectAccountRequest) returns (CallbackSelectAccountResponse) {}
+
+  // CallbackConsent reports the consent result to server.
+  rpc CallbackConsent(CallbackConsentRequest) returns (CallbackConsentResponse) {}
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Login
+// ---------------------------------------------------------------------------------------------------------------------
+
+message LoginRequest {
+  // identifier of the OAuth/OIDC session.
+  string session_id = 1;
+  // OAuth/OIDC context.
+  Context context = 2;
+  // arbitrary login hints whose format is agreed upon with clients and providers.
+  string login_hint = 10;
+  // a list of authentication context class references, in order of preference.
+  repeated string acr_values = 11;
+}
+
+message LoginResponse {
+  oneof result_or_redirect {
+    // direct login result
+    LoginResult result = 1;
+    // (or) http redirection
+    Redirection redirection = 2;
+  }
+}
+
+message CallbackLoginRequest {
+  // identifier of the OAuth/OIDC session.
+  string session_id = 1;
+  // result
+  LoginResult result = 2;
+}
+
+message CallbackLoginResponse {
+  google.protobuf.Empty empty = 1;
+}
+
+message LoginResult {
+  // result of End-User authentication.
+  Authentication authentication = 1;
+  // claims data
+  ClaimsResponse claims = 2;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Select Account
+// ---------------------------------------------------------------------------------------------------------------------
+
+message SelectAccountRequest {
+  // identifier of the OAuth/OIDC session.
+  string session_id = 1;
+  // OAuth/OIDC context.
+  Context context = 2;
+  // a list of user authentication to select from.
+  repeated Authentication options = 10;
+}
+
+message SelectAccountResponse {
+  oneof result_or_redirect {
+    // direct response
+    SelectAccountResult result = 1;
+    // (or) http redirection
+    Redirection redirection = 2;
+  }
+}
+
+message CallbackSelectAccountRequest {
+  // identifier of the OAuth/OIDC session.
+  string session_id = 1;
+  // result
+  SelectAccountResult result = 2;
+}
+
+message CallbackSelectAccountResponse {
+  google.protobuf.Empty empty = 1;
+}
+
+message SelectAccountResult {
+  // selected user authentication
+  Authentication selection = 1;
+  // claims data
+  ClaimsResponse claims = 2;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Consent
+// ---------------------------------------------------------------------------------------------------------------------
+
+message ConsentRequest {
+  // identifier of the OAuth/OIDC session.
+  string session_id = 1;
+  // OAuth/OIDC context
+  Context context = 2;
+  // authenticated user subject
+  string subject = 3;
+  // a list of scopes that requires End-User consent
+  repeated string scopes = 10;
+}
+
+message ConsentResponse {
+  oneof result_or_redirect {
+    // direct response
+    ConsentResult result = 1;
+    // (or) http redirection
+    Redirection redirection = 2;
+  }
+}
+
+message CallbackConsentRequest {
+  // identifier of the OAuth/OIDC session.
+  string session_id = 1;
+  // result
+  ConsentResult result = 2;
+}
+
+message CallbackConsentResponse {
+  google.protobuf.Empty empty = 1;
+}
+
+message ConsentResult {
+  // a list of granted scopes. unsolicited scopes will be ignored.
+  repeated string granted_scopes = 1;
+  // ephemeral grant means one-time grant. if false, these granted scopes will be saved to grant records.
+  bool ephemeral = 2;
+  // claims data
+  ClaimsResponse claims = 3;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Shared
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Redirection is instruction for server to perform HTTP redirection.
+message Redirection {
+  // HTTP status for the redirect, usually 302 or 307.
+  int32 status = 1;
+  // Base url of the redirection location.
+  string target = 2;
+  // Parameters to be included in the redirection url.
+  map<string, string> params = 3;
+  // Method to render parameters in the redirection url. Setting to MODE_UNSPECIFIED will
+  // default to MODE_QUERY.
+  Mode mode = 4;
+  // Extra headers to set in the http response.
+  map<string, string> headers = 5;
+
+  enum Mode {
+    MODE_UNSPECIFIED = 0;
+    MODE_QUERY = 1;
+    MODE_FRAGMENT = 2;
+  }
+}
+
+message Client {
+  // identifier of client
+  string id = 1;
+  // name of client
+  string name = 2;
+  // a list of email contacts
+  repeated string contacts = 3;
+  // logo asset url
+  string logo_uri = 4;
+  // client website url
+  string client_uri = 5;
+  // client OAuth policy url
+  string policy_uri = 6;
+  // client terms of service url
+  string tos_uri = 7;
+}
+
+message Context {
+  // requesting client's public information
+  Client client = 1;
+  // OIDC display parameter
+  string display = 2;
+  // a list of locales preferred for the user interface
+  repeated string ui_locales = 3;
+  // request for claims
+  ClaimsRequest claims = 4;
+}
+
+message Authentication {
+  // optional when provided as login result.
+  string id = 1;
+  // correspond to "sub" claim
+  string subject = 2;
+  // correspond to "auth_time" claim.
+  google.protobuf.Timestamp auth_time = 3;
+  // considered session only if zero.
+  google.protobuf.Timestamp expiry = 4;
+  // correspond to "amr" claim.
+  repeated string amr = 5;
+  // optional when provided as login result. correspond to "acr" claim.
+  string acr = 6;
+  // optional when provided as login result. correspond to "azp" claim.
+  string azp = 7;
+}
+
+message ClaimsRequest {
+  // expanded claims request to be included in id_token
+  map<string, ClaimOption> id_token = 1;
+  // expanded claims request to be included in userinfo
+  map<string, ClaimOption> userinfo = 2;
+}
+
+message ClaimOption {
+  // essential indicates this claim is important to client
+  bool essential = 1;
+  // values is the expected list of values
+  repeated string values = 2;
+}
+
+message ClaimsResponse {
+  // claims to be included in id_token response.
+  google.protobuf.Struct id_token = 1;
+  // claims to be included in userinfo response.
+  google.protobuf.Struct userinfo = 2;
+}
