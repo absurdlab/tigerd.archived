@@ -1,0 +1,6 @@
+logging:
+  level: DEBUG
+  json_format: false
+
+discovery:
+  skip_validation: true

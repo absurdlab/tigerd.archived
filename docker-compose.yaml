@@ -1,0 +1,29 @@
+# This is the docker compose definition for local development and testing.
+
+version: "3.9"
+
+services:
+  server:
+    image: "tigerd:latest"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command:
+      - server
+    environment:
+      - TIGERD_CONFIG=/etc/tigerd/server.yaml
+      - TIGERD_PORT=8000
+    volumes:
+      - ${PWD}/local/server.yaml:/etc/tigerd/server.yaml:ro
+      - ${PWD}/local/discovery.json:/etc/tigerd/discovery.json:ro
+      - ${PWD}/local/jwks.json:/etc/tigerd/jwks.json:ro
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    networks:
+      - tgd
+
+networks:
+  tgd:
+    driver: bridge
+    name: tigerd
