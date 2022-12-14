@@ -1,5 +1,5 @@
 package buildinfo
 
 var (
-	Version = "unknown"
+	GitHash = "unknown"
 )
