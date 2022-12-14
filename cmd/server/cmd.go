@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/absurdlab/tigerd/cmd/server/internal/handler"
+	"github.com/absurdlab/tigerd/cmd/server/internal/health"
 	"github.com/absurdlab/tigerd/internal/wellknown"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog"
@@ -38,7 +39,11 @@ func Command() *cli.Command {
 			return fx.New(
 				fx.NopLogger,
 				fx.Supply(cfg),
-				fx.Provide(newEcho, newBaseLogger),
+				fx.Provide(
+					newEcho,
+					newBaseLogger,
+					health.In0(newHealth),
+				),
 				fx.Provide(
 					newDiscoveryProperties,
 					wellknown.NewDiscovery,
@@ -47,6 +52,7 @@ func Command() *cli.Command {
 				),
 				fx.Provide(
 					handler.Out(handler.NewWellKnownHandler),
+					handler.Out(handler.NewUnderscoreHandler),
 				),
 				fx.Invoke(
 					handler.In0(startServer),

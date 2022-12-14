@@ -2,7 +2,9 @@ package server
 
 import (
 	"errors"
+	"github.com/absurdlab/tigerd/buildinfo"
 	"github.com/absurdlab/tigerd/internal/wellknown"
+	"github.com/hellofresh/health-go/v5"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog"
 	"github.com/ziflex/lecho/v3"
@@ -67,4 +69,21 @@ func newJSONWebKeySetProperties(cfg *config) *wellknown.JSONWebKeySetProperties 
 	return &wellknown.JSONWebKeySetProperties{
 		Inline: cfg.JSONWebKeySet.Value,
 	}
+}
+
+func newHealth(checks []health.Config) (*health.Health, error) {
+	h, err := health.New(
+		health.WithComponent(health.Component{
+			Name:    "tigerd-server",
+			Version: buildinfo.GitHash,
+		}),
+		health.WithSystemInfo(),
+		health.WithMaxConcurrent(2),
+		health.WithChecks(checks...),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return h, nil
 }
