@@ -56,7 +56,7 @@ func Command() *cli.Command {
 	}
 }
 
-func startServer(handlers []handler.H, e *echo.Echo, cfg *config, logger *zerolog.Logger) error {
+func startServer(handlers []handler.Interface, e *echo.Echo, cfg *config, logger *zerolog.Logger) error {
 	for _, h := range handlers {
 		if err := h.Mount(e); err != nil {
 			return err

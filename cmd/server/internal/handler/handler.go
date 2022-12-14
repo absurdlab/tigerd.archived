@@ -9,9 +9,9 @@ const (
 	GroupTag = `group:"handlers"`
 )
 
-// H is implemented by all api endpoints for handling http/grpc traffic.
-type H interface {
-	// Mount mounts the endpoints available under this implementation of H to the echo framework.
+// Interface is implemented by all api endpoints for handling http/grpc traffic.
+type Interface interface {
+	// Mount mounts the endpoints available under this implementation of Interface to the echo framework.
 	Mount(e *echo.Echo) error
 }
 
@@ -19,7 +19,7 @@ type H interface {
 func Out(fn any) any {
 	return fx.Annotate(
 		fn,
-		fx.As(new(H)),
+		fx.As(new(Interface)),
 		fx.ResultTags(GroupTag),
 	)
 }

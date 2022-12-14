@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func NewWellKnownHandler(discovery *wellknown.Discovery, jwks *jose.JSONWebKeySet) H {
+func NewWellKnownHandler(discovery *wellknown.Discovery, jwks *jose.JSONWebKeySet) Interface {
 	return &wellKnownHandler{
 		discovery: discovery,
 		jwks:      jwks,
