@@ -4,7 +4,6 @@ import (
 	"errors"
 	"github.com/absurdlab/tigerd/buildinfo"
 	"github.com/absurdlab/tigerd/internal/authorize"
-	"github.com/absurdlab/tigerd/internal/healthprobe"
 	"github.com/absurdlab/tigerd/internal/wellknown"
 	"github.com/hellofresh/health-go/v5"
 	"github.com/labstack/echo/v4"
@@ -80,8 +79,8 @@ func newProviderProperties(cfg *config) []*authorize.ProviderProperties {
 	})
 }
 
-func newHealth(probes []healthprobe.Interface) (*health.Health, error) {
-	h, err := health.New(
+func newHealth() (*health.Health, error) {
+	return health.New(
 		health.WithComponent(health.Component{
 			Name:    "tigerd-server",
 			Version: buildinfo.GitHash,
@@ -89,15 +88,4 @@ func newHealth(probes []healthprobe.Interface) (*health.Health, error) {
 		health.WithSystemInfo(),
 		health.WithMaxConcurrent(2),
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, probe := range probes {
-		if err := probe.Register(h); err != nil {
-			return nil, err
-		}
-	}
-
-	return h, nil
 }

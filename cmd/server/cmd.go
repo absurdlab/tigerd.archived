@@ -2,8 +2,10 @@ package server
 
 import (
 	"github.com/absurdlab/tigerd/cmd/server/internal/handler"
+	"github.com/absurdlab/tigerd/internal/authorize"
 	"github.com/absurdlab/tigerd/internal/healthprobe"
 	"github.com/absurdlab/tigerd/internal/wellknown"
+	"github.com/hellofresh/health-go/v5"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog"
 	"github.com/urfave/cli/v2"
@@ -42,7 +44,7 @@ func Command() *cli.Command {
 				fx.Provide(
 					newEcho,
 					newBaseLogger,
-					healthprobe.In0(newHealth),
+					newHealth,
 				),
 				fx.Provide(
 					newDiscoveryProperties,
@@ -52,17 +54,28 @@ func Command() *cli.Command {
 				),
 				fx.Provide(
 					newProviderProperties,
+					healthprobe.Out(authorize.NewProviderHealthProbes),
 				),
 				fx.Provide(
 					handler.Out(handler.NewWellKnownHandler),
 					handler.Out(handler.NewUnderscoreHandler),
 				),
 				fx.Invoke(
+					healthprobe.In0(registerHealthProbes),
 					handler.In0(startServer),
 				),
 			).Start(cc.Context)
 		},
 	}
+}
+
+func registerHealthProbes(probes []healthprobe.Interface, h *health.Health) error {
+	for _, probe := range probes {
+		if err := probe.Register(h); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func startServer(handlers []handler.Interface, e *echo.Echo, cfg *config, logger *zerolog.Logger) error {
