@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"fmt"
+	"github.com/absurdlab/tigerd/internal/authorize"
 	"github.com/urfave/cli/v2"
 )
 
@@ -27,6 +28,8 @@ type config struct {
 	JSONWebKeySet struct {
 		Value string `yaml:"value"`
 	} `yaml:"jwks"`
+
+	Providers []*authorize.ProviderProperties `yaml:"providers"`
 }
 
 func (c config) address() string {

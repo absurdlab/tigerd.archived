@@ -1,12 +1,17 @@
-package health
+package healthprobe
 
 import (
+	"github.com/hellofresh/health-go/v5"
 	"go.uber.org/fx"
 )
 
 const (
-	GroupTag = `group:"health"`
+	GroupTag = `group:"health_probe"`
 )
+
+type Interface interface {
+	Register(health *health.Health) error
+}
 
 // Out annotates the return value of the constructor function with GroupTag.
 func Out(fn any) any {

@@ -3,10 +3,13 @@ package server
 import (
 	"errors"
 	"github.com/absurdlab/tigerd/buildinfo"
+	"github.com/absurdlab/tigerd/internal/authorize"
+	"github.com/absurdlab/tigerd/internal/healthprobe"
 	"github.com/absurdlab/tigerd/internal/wellknown"
 	"github.com/hellofresh/health-go/v5"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog"
+	"github.com/samber/lo"
 	"github.com/ziflex/lecho/v3"
 	"os"
 	"strings"
@@ -71,7 +74,13 @@ func newJSONWebKeySetProperties(cfg *config) *wellknown.JSONWebKeySetProperties 
 	}
 }
 
-func newHealth(checks []health.Config) (*health.Health, error) {
+func newProviderProperties(cfg *config) []*authorize.ProviderProperties {
+	return lo.UniqBy(cfg.Providers, func(item *authorize.ProviderProperties) string {
+		return item.Key
+	})
+}
+
+func newHealth(probes []healthprobe.Interface) (*health.Health, error) {
 	h, err := health.New(
 		health.WithComponent(health.Component{
 			Name:    "tigerd-server",
@@ -79,10 +88,15 @@ func newHealth(checks []health.Config) (*health.Health, error) {
 		}),
 		health.WithSystemInfo(),
 		health.WithMaxConcurrent(2),
-		health.WithChecks(checks...),
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	for _, probe := range probes {
+		if err := probe.Register(h); err != nil {
+			return nil, err
+		}
 	}
 
 	return h, nil

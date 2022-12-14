@@ -2,7 +2,7 @@ package server
 
 import (
 	"github.com/absurdlab/tigerd/cmd/server/internal/handler"
-	"github.com/absurdlab/tigerd/cmd/server/internal/health"
+	"github.com/absurdlab/tigerd/internal/healthprobe"
 	"github.com/absurdlab/tigerd/internal/wellknown"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog"
@@ -42,13 +42,16 @@ func Command() *cli.Command {
 				fx.Provide(
 					newEcho,
 					newBaseLogger,
-					health.In0(newHealth),
+					healthprobe.In0(newHealth),
 				),
 				fx.Provide(
 					newDiscoveryProperties,
 					wellknown.NewDiscovery,
 					newJSONWebKeySetProperties,
 					wellknown.NewJSONWebKeySet,
+				),
+				fx.Provide(
+					newProviderProperties,
 				),
 				fx.Provide(
 					handler.Out(handler.NewWellKnownHandler),
