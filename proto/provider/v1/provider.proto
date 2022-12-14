@@ -6,6 +6,14 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/struct.proto";
 
+// PingService performs health check functions.
+service PingService {
+  // Ping ensure the provider implementation is alive. Normal returns are treated as success. Any error returns are
+  // treated as failure. Provider ping failure does not kill server availability, but may put the server in a partially
+  // available state where client associated with this provider are not able to make requests.
+  rpc Ping(PingRequest) returns (PingResponse) {}
+}
+
 // ProviderService is invoked by the server to talk to the provider when it requires End-User data or decisions. This
 // happens during the /oauth/authorize call.
 //
@@ -164,6 +172,14 @@ message ConsentResult {
   // claims data
   ClaimsResponse claims = 3;
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Ping
+// ---------------------------------------------------------------------------------------------------------------------
+
+message PingRequest {}
+
+message PingResponse {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Shared
