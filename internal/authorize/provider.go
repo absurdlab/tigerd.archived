@@ -7,6 +7,8 @@ import (
 	providerv1 "github.com/absurdlab/tigerd/proto/gen/go/proto/provider/v1"
 	"github.com/absurdlab/tigerd/proto/gen/go/proto/provider/v1/providerv1connect"
 	"github.com/bufbuild/connect-go"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/hellofresh/health-go/v5"
 	"net/http"
 	"time"
@@ -16,9 +18,24 @@ import (
 type ProviderProperties struct {
 	// Key is the unique identifier of this provider.
 	Key string `json:"key" yaml:"key"`
-	// Address is the <host>:<port> address to connect to the provider. Non-localhost is supported, however, will
+	// Address is the dial string address to connect to the provider. Non-localhost is supported, however, will
 	// print a WARNING message to console.
 	Address string `json:"address" yaml:"address"`
+}
+
+// Validate performs validation to this ProviderProperties.
+func (p *ProviderProperties) Validate() error {
+	err := validation.Errors{
+		"key": validation.Validate(p.Key, validation.Required),
+		"address": validation.Validate(p.Address,
+			validation.Required,
+			is.DialString,
+		),
+	}.Filter()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func NewProviderHealthProbes(configs []*ProviderProperties) healthprobe.Interface {

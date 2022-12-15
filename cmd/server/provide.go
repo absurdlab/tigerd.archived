@@ -10,6 +10,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/samber/lo"
 	"github.com/ziflex/lecho/v3"
+	"net"
 	"os"
 	"strings"
 	"time"
@@ -73,10 +74,26 @@ func newJSONWebKeySetProperties(cfg *config) *wellknown.JSONWebKeySetProperties 
 	}
 }
 
-func newProviderProperties(cfg *config) []*authorize.ProviderProperties {
+func newProviderProperties(cfg *config, logger *zerolog.Logger) ([]*authorize.ProviderProperties, error) {
+	for _, each := range cfg.Providers {
+		if err := each.Validate(); err != nil {
+			return nil, err
+		}
+
+		host, _, _ := net.SplitHostPort(each.Address)
+		switch strings.ToLower(host) {
+		case "localhost", "127.0.0.1":
+		default:
+			logger.Warn().
+				Str("key", each.Key).
+				Str("address", each.Address).
+				Msg("detected non-localhost provider, please make sure it is deployed on the same physical host")
+		}
+	}
+
 	return lo.UniqBy(cfg.Providers, func(item *authorize.ProviderProperties) string {
 		return item.Key
-	})
+	}), nil
 }
 
 func newHealth() (*health.Health, error) {
