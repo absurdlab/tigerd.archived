@@ -1,0 +1,116 @@
+name: push
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches:
+      - main
+      - feature/*
+    tags:
+      - v**
+
+jobs:
+  # --- prepare stage ---
+  # compute shared data
+  prepare:
+    runs-on: ubuntu-22.04
+    outputs:
+      BUILD_DATE: ${{ steps.info.outputs.BUILD_DATE }}
+      VERSION: ${{ steps.info.outputs.VERSION }}
+      REVISION: ${{ steps.info.outputs.REVISION }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+
+      - name: compute version
+        id: info
+        run: |
+          VERSION=sha-${GITHUB_SHA::8}
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF/refs\/tags\//}
+          fi
+          echo ::set-output name=BUILD_DATE::$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+          echo ::set-output name=VERSION::${VERSION}
+          echo ::set-output name=REVISION::${GITHUB_SHA}
+
+      - name: debug
+        run: |
+          echo build date: ${{ steps.info.outputs.BUILD_DATE }}
+          echo version: ${{ steps.info.outputs.VERSION }}
+          echo revision: ${{ steps.info.outputs.REVISION }}
+
+  # --- validate stage ---
+  # lints and static checks
+#  validate:
+#    runs-on: ubuntu-22.04
+#    needs:
+#      - prepare
+#    steps:
+#      - name: checkout
+#        uses: actions/checkout@v3
+#
+#      - name: setup buf
+#        uses: bufbuild/buf-setup-action@v1
+#        with:
+#          version: "1.10.0"
+#
+#      - name: buf lint
+#        uses: bufbuild/buf-lint-action@v1
+#        with:
+#          input: "proto"
+#
+#      - name: buf breaking
+#        uses: bufbuild/buf-breaking-action@v1
+#        with:
+#          input: "proto"
+#          against: "https://github.com/absurdlab/tigerd.git#branch=main,ref=HEAD~1"
+
+  # --- test stage ---
+  # unit tests and integration tests
+#  test:
+#    runs-on: ubuntu-22.04
+#    needs:
+#      - prepare
+#      - validate
+#    steps:
+#      - name: checkout
+#        uses: actions/checkout@v3
+#
+#      - name: setup buf
+#        uses: bufbuild/buf-setup-action@v1
+#        with:
+#          version: "1.10.0"
+#
+#      - name: buf generate
+#        run: |
+#          buf generate
+#
+#      - name: setup go
+#        uses: actions/setup-go@v3
+#        with:
+#          go-version: "^1.18.1"
+#
+#      - name: setup cache
+#        uses: actions/cache@v3
+#        with:
+#          path: |
+#            ~/.cache/go-build
+#            ~/go/pkg/mod
+#          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+#          restore-keys: |
+#            ${{ runner.os }}-go-
+#
+#      - name: download dependencies
+#        run: |
+#          go mod download
+#
+#      - name: unit tests
+#        run: |
+#          go test --tags unit -v ./...
+#
+#      - name: integration tests
+#        run: |
+#          go test --tags integration -v ./...
+
+  # --- build stage ---
+  # build and publish artifact
