@@ -1,0 +1,11 @@
+FROM alpine:3.15
+
+ARG TIGERD_EXEC=tigerd
+
+LABEL org.opencontainers.image.title="tigerd"
+LABEL org.opencontainers.image.source="https://github.com/absurdlab/tigerd"
+LABEL org.opencontainers.image.authors="Weinan Qiu"
+
+COPY $TIGERD_EXEC /usr/bin/tigerd
+
+ENTRYPOINT ["/usr/bin/tigerd"]
