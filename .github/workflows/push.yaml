@@ -64,16 +64,10 @@ jobs:
           input: "proto"
           against: "https://github.com/absurdlab/tigerd.git#branch=main,ref=HEAD~1,subdir=proto"
 
-      - name: buf push (on tagging only)
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: bufbuild/buf-push-action@v1
-        with:
-          input: "proto"
-          buf_token: ${{ secrets.BUF_TOKEN }}
 
-  # --- test stage ---
-  # unit tests and integration tests
-  test:
+  # --- main stage ---
+  # run tests and build artifacts
+  main:
     runs-on: ubuntu-22.04
     needs:
       - prepare
@@ -81,15 +75,6 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v3
-
-      - name: setup buf
-        uses: bufbuild/buf-setup-action@v1
-        with:
-          version: "1.10.0"
-
-      - name: buf generate
-        run: |
-          buf generate
 
       - name: setup go
         uses: actions/setup-go@v3
@@ -106,17 +91,72 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
+      - name: setup buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          version: "1.10.0"
+
+      - name: buf generate
+        run: |
+          buf generate
+
+      - name: buf push (on tagging only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: bufbuild/buf-push-action@v1
+        with:
+          input: "proto"
+          buf_token: ${{ secrets.BUF_TOKEN }}
+
       - name: download dependencies
         run: |
           go mod download
 
       - name: unit tests
         run: |
-          go test --tags unit -v ./...
+          go test --tags unit ./...
 
       - name: integration tests
         run: |
-          go test --tags integration -v ./...
+          go test --tags integration ./...
 
-  # --- build stage ---
-  # build and publish artifact
+      - name: go build
+        run: |
+          go build -a \
+          -ldflags "-X github.com/absurdlab/tigerd/buildinfo.GitHash=${{ needs.prepare.outputs.VERSION }}" \
+          -installsuffix cgo \
+          -o tigerd .
+
+      - name: image metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ghcr.io/absurdlab/tigerd
+          tags: |
+            type=raw,value=${{ needs.prepare.outputs.VERSION }}
+            type=raw,value=latest
+
+      - name: login to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.PAT_TOKEN }}
+
+      - name: setup buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: setup qemu
+        uses: docker/setup-qemu-action@v2
+
+      - name: build image
+        uses: docker/build-push-action@v3
+        with:
+          push: true
+          context: .
+          file: ./Dockerfile.CI
+          build-args: |
+            TIGERD_EXEC=tigerd
+          platforms: linux/amd64,linux/arm/v7,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
