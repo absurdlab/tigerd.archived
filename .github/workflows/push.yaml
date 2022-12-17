@@ -71,53 +71,52 @@ jobs:
           input: "proto"
           buf_token: ${{ secrets.BUF_TOKEN }}
 
-
   # --- test stage ---
   # unit tests and integration tests
-#  test:
-#    runs-on: ubuntu-22.04
-#    needs:
-#      - prepare
-#      - validate
-#    steps:
-#      - name: checkout
-#        uses: actions/checkout@v3
-#
-#      - name: setup buf
-#        uses: bufbuild/buf-setup-action@v1
-#        with:
-#          version: "1.10.0"
-#
-#      - name: buf generate
-#        run: |
-#          buf generate
-#
-#      - name: setup go
-#        uses: actions/setup-go@v3
-#        with:
-#          go-version: "^1.18.1"
-#
-#      - name: setup cache
-#        uses: actions/cache@v3
-#        with:
-#          path: |
-#            ~/.cache/go-build
-#            ~/go/pkg/mod
-#          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-#          restore-keys: |
-#            ${{ runner.os }}-go-
-#
-#      - name: download dependencies
-#        run: |
-#          go mod download
-#
-#      - name: unit tests
-#        run: |
-#          go test --tags unit -v ./...
-#
-#      - name: integration tests
-#        run: |
-#          go test --tags integration -v ./...
+  test:
+    runs-on: ubuntu-22.04
+    needs:
+      - prepare
+      - validate
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+
+      - name: setup buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          version: "1.10.0"
+
+      - name: buf generate
+        run: |
+          buf generate
+
+      - name: setup go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "^1.18.1"
+
+      - name: setup cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: download dependencies
+        run: |
+          go mod download
+
+      - name: unit tests
+        run: |
+          go test --tags unit -v ./...
+
+      - name: integration tests
+        run: |
+          go test --tags integration -v ./...
 
   # --- build stage ---
   # build and publish artifact
