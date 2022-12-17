@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - main
-      - feature/*
     tags:
       - v**
 
@@ -63,12 +62,14 @@ jobs:
         uses: bufbuild/buf-breaking-action@v1
         with:
           input: "proto"
-          against: "https://github.com/absurdlab/tigerd.git#branch=main,ref=HEAD~1"
+          against: "https://github.com/absurdlab/tigerd.git#branch=main,ref=HEAD~1,subdir=proto"
 
       - name: buf push (on tagging only)
         if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          buf push
+        uses: bufbuild/buf-push-action@v1
+        with:
+          input: "proto"
+          buf_token: ${{ secrets.BUF_TOKEN }}
 
 
   # --- test stage ---
