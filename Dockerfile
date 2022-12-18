@@ -20,7 +20,7 @@ COPY . .
 RUN go generate && \
     go build \
     -a \
-    -ldflags "-X github.com/absurdlab/tigerd/buildinfo.GitHash=`git rev-parse HEAD | head -c 8`" \
+    -ldflags "-X github.com/absurdlab/tigerd/buildinfo.Version=`git rev-parse HEAD | head -c 8`" \
     -installsuffix cgo \
     -o tigerd \
     .

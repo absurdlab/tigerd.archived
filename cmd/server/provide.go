@@ -100,7 +100,7 @@ func newHealth() (*health.Health, error) {
 	return health.New(
 		health.WithComponent(health.Component{
 			Name:    "tigerd-server",
-			Version: buildinfo.GitHash,
+			Version: buildinfo.Version,
 		}),
 		health.WithSystemInfo(),
 		health.WithMaxConcurrent(2),

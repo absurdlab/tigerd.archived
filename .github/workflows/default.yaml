@@ -1,4 +1,4 @@
-name: push
+name: default
 
 on:
   workflow_dispatch: {}
@@ -110,7 +110,7 @@ jobs:
       - name: build
         run: |
           go build -a \
-          -ldflags "-X github.com/absurdlab/tigerd/buildinfo.GitHash=${{ needs.prepare.outputs.VERSION }}" \
+          -ldflags "-X github.com/absurdlab/tigerd/buildinfo.Version=${{ needs.prepare.outputs.VERSION }}" \
           -installsuffix cgo \
           -o tigerd .
       - name: upload

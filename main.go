@@ -13,7 +13,7 @@ func main() {
 	tigerd := &cli.App{
 		Name:        "tigerd",
 		Description: "Tigerd turns stuff into identity providers.",
-		Version:     buildinfo.GitHash,
+		Version:     buildinfo.Version,
 		Compiled:    time.Now(),
 		Copyright:   "MIT",
 		Commands: []*cli.Command{
