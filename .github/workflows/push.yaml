@@ -8,6 +8,11 @@ on:
     tags:
       - v**
 
+env:
+  BUF_VERSION: "1.10.0"
+  BUF_PROTO_DIR: "proto"
+  GO_VERSION: "1.18.1"
+
 jobs:
   # --- prepare stage ---
   # compute shared data
@@ -20,7 +25,6 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v3
-
       - name: export build info
         id: info
         run: |
@@ -31,7 +35,6 @@ jobs:
           echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
           echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
           echo "REVISION=${GITHUB_SHA}" >> $GITHUB_OUTPUT
-
       - name: debug
         run: |
           echo build date: ${{ steps.info.outputs.BUILD_DATE }}
@@ -39,49 +42,48 @@ jobs:
           echo revision: ${{ steps.info.outputs.REVISION }}
 
 
-  # --- validate stage ---
-  # lints and static checks
-  validate:
+  # --- buf stage ---
+  # lint proto files
+  buf:
     runs-on: ubuntu-22.04
-    needs:
-      - prepare
     steps:
       - name: checkout
         uses: actions/checkout@v3
-
       - name: setup buf
         uses: bufbuild/buf-setup-action@v1
         with:
-          version: "1.10.0"
-
+          version: ${{ env.BUF_VERSION }}
       - name: buf lint
         uses: bufbuild/buf-lint-action@v1
         with:
-          input: "proto"
-
+          input: ${{ env.BUF_PROTO_DIR }}
       - name: buf breaking
         uses: bufbuild/buf-breaking-action@v1
         with:
-          input: "proto"
-          against: "https://github.com/absurdlab/tigerd.git#branch=main,ref=HEAD~1,subdir=proto"
+          input: ${{ env.BUF_PROTO_DIR }}
+          against: https://github.com/absurdlab/tigerd.git#branch=main,ref=HEAD~1,subdir=${{ env.BUF_PROTO_DIR }}
+      - name: buf push (on tagging only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: bufbuild/buf-push-action@v1
+        with:
+          input: ${{ env.BUF_PROTO_DIR }}
+          buf_token: ${{ secrets.BUF_TOKEN }}
 
 
-  # --- main stage ---
-  # run tests and build artifacts
-  main:
+  # -- go stage ---
+  # test and build go executable
+  go:
     runs-on: ubuntu-22.04
     needs:
+      - buf
       - prepare
-      - validate
     steps:
       - name: checkout
         uses: actions/checkout@v3
-
       - name: setup go
         uses: actions/setup-go@v3
         with:
-          go-version: "^1.18.1"
-
+          go-version: ${{ env.GO_VERSION }}
       - name: setup cache
         uses: actions/cache@v3
         with:
@@ -91,44 +93,50 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-
       - name: setup buf
         uses: bufbuild/buf-setup-action@v1
         with:
-          version: "1.10.0"
+          version: ${{ env.BUF_VERSION }}
           github_token: ${{ secrets.PAT_TOKEN }}
-
-      - name: buf generate
+      - name: prepare
         run: |
-          buf generate
-
-      - name: buf push (on tagging only)
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: bufbuild/buf-push-action@v1
-        with:
-          input: "proto"
-          buf_token: ${{ secrets.BUF_TOKEN }}
-
-      - name: download dependencies
-        run: |
-          go mod download
-
+          buf generate && go mod tidy
       - name: unit tests
         run: |
           go test --tags unit ./...
-
       - name: integration tests
         run: |
           go test --tags integration ./...
-
-      - name: go build
+      - name: build
         run: |
           go build -a \
           -ldflags "-X github.com/absurdlab/tigerd/buildinfo.GitHash=${{ needs.prepare.outputs.VERSION }}" \
           -installsuffix cgo \
           -o tigerd .
+      - name: upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: tigerd
+          path: tigerd
 
-      - name: image metadata
+
+  # --- image stage ---
+  # build and push container image
+  image:
+    runs-on: ubuntu-22.04
+    needs:
+      - prepare
+      - go
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: setup buildx
+        uses: docker/setup-buildx-action@v2
+      - name: download
+        uses: actions/download-artifact@v3
+        with:
+          name: tigerd
+      - name: prepare metadata
         id: meta
         uses: docker/metadata-action@v4
         with:
@@ -137,20 +145,12 @@ jobs:
           tags: |
             type=raw,value=${{ needs.prepare.outputs.VERSION }}
             type=raw,value=latest
-
       - name: login to GHCR
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ secrets.GHCR_USERNAME }}
           password: ${{ secrets.PAT_TOKEN }}
-
-      - name: setup buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: setup qemu
-        uses: docker/setup-qemu-action@v2
-
       - name: build and push image
         uses: docker/build-push-action@v3
         with:
@@ -159,6 +159,6 @@ jobs:
           file: ./Dockerfile.CI
           build-args: |
             TIGERD_EXEC=tigerd
-          platforms: linux/amd64,linux/arm/v7,linux/arm64
+          platforms: linux/amd64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
