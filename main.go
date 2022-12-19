@@ -9,6 +9,10 @@ import (
 	"time"
 )
 
+var commands = []*cli.Command{
+	server.Command(),
+}
+
 func main() {
 	tigerd := &cli.App{
 		Name:        "tigerd",
@@ -16,9 +20,7 @@ func main() {
 		Version:     buildinfo.Version,
 		Compiled:    time.Now(),
 		Copyright:   "MIT",
-		Commands: []*cli.Command{
-			server.Command(),
-		},
+		Commands:    commands,
 		Authors: []*cli.Author{
 			{Name: "Weinan Qiu", Email: "davidiamyou@gmail.com"},
 		},
