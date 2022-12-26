@@ -1,4 +1,9 @@
+# Jetbrains
 .idea/
 *.iml
 
+# buf.build
 proto/gen/
+
+# goreleaser
+dist/

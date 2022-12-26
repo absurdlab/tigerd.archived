@@ -15,22 +15,20 @@ import (
 )
 
 func Command() *cli.Command {
-	var (
-		cfg   = new(config)
-		flags = []cli.Flag{
-			&cli.StringFlag{
-				Name:    "config",
-				Usage:   "Path to a yaml configuration file.",
-				EnvVars: []string{"TIGERD_CONFIG"},
-			},
-			altsrc.NewIntFlag(cfg.portFlag()),
-			altsrc.NewStringFlag(cfg.loggingLevelFlag()),
-			altsrc.NewBoolFlag(cfg.loggingJSONFormatFlag()),
-			altsrc.NewStringFlag(cfg.discoveryValueFlag()),
-			altsrc.NewBoolFlag(cfg.discoverySkipValidationFlag()),
-			altsrc.NewStringFlag(cfg.jwksValueFlag()),
-		}
-	)
+	cfg := new(config)
+	flags := []cli.Flag{
+		&cli.StringFlag{
+			Name:    "config",
+			Usage:   "Path to a yaml configuration file.",
+			EnvVars: []string{"TIGERD_CONFIG"},
+		},
+		altsrc.NewIntFlag(cfg.portFlag()),
+		altsrc.NewStringFlag(cfg.loggingLevelFlag()),
+		altsrc.NewBoolFlag(cfg.loggingJSONFormatFlag()),
+		altsrc.NewStringFlag(cfg.discoveryValueFlag()),
+		altsrc.NewBoolFlag(cfg.discoverySkipValidationFlag()),
+		altsrc.NewStringFlag(cfg.jwksValueFlag()),
+	}
 
 	return &cli.Command{
 		Name:        "server",

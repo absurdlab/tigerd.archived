@@ -1,0 +1,54 @@
+# This is an example .goreleaser.yml file with some sensible defaults.
+# Make sure to check the documentation at https://goreleaser.com
+project_name: tigerd
+
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
+
+env:
+  - VERSION={{ if index .Env "VERSION"  }}{{ .Env.VERSION }}{{ else }}{{ .ShortCommit }}{{ end }}
+
+builds:
+  - flags:
+      - "-a"
+      - "-installsuffix cgo"
+    ldflags:
+      - "-X github.com/absurdlab/tigerd/buildinfo.Version={{ .Env.VERSION }}"
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+
+archives:
+  - wrap_in_directory: true
+    format_overrides:
+      - goos: windows
+        format: zip
+
+dockers:
+  - goos: linux
+    goarch: amd64
+    goarm: 6
+    goamd64: v1
+    image_templates:
+      - "ghcr.io/absurdlab/tigerd:latest"
+      - "ghcr.io/absurdlab/tigerd:{{ .Env.VERSION }}"
+
+checksum:
+  name_template: 'checksums.txt'
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^ci:'
+
+# modelines, feel free to remove those if you don't want/use them:
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
