@@ -12,16 +12,20 @@ env:
 
 builds:
   - flags:
-      - "-a"
-      - "-installsuffix cgo"
+      - -a
+      - -installsuffix
+      - cgo
     ldflags:
       - "-X github.com/absurdlab/tigerd/buildinfo.Version={{ .Env.VERSION }}"
     env:
       - CGO_ENABLED=0
     goos:
       - linux
-      - windows
       - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
 
 archives:
   - wrap_in_directory: true
@@ -34,9 +38,19 @@ dockers:
     goarch: amd64
     goarm: 6
     goamd64: v1
+    dockerfile: Dockerfile.CI
     image_templates:
       - "ghcr.io/absurdlab/tigerd:latest"
       - "ghcr.io/absurdlab/tigerd:{{ .Env.VERSION }}"
+
+release:
+  github:
+    owner: absurdlab
+    name: tigerd
+  draft: true
+  replace_existing_draft: true
+  prerelease: auto
+  mode: replace
 
 checksum:
   name_template: 'checksums.txt'
