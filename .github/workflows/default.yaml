@@ -75,7 +75,7 @@ jobs:
 
 
   # -- main stage ---
-  # test, build and release
+  # test, build and release go artifacts
   main:
     runs-on: ubuntu-22.04
     needs:
@@ -124,7 +124,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v4
         with:
           version: latest
-          args: release --snapshot --skip-publish --rm-dist
+          args: release --snapshot --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
           VERSION: ${{ needs.prepare.outputs.VERSION }}
@@ -133,10 +133,13 @@ jobs:
         uses: goreleaser/goreleaser-action@v4
         with:
           version: latest
-          args: release --skip-publish --rm-dist
+          args: release --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
           VERSION: ${{ needs.prepare.outputs.VERSION }}
+      - name: push image
+        run: |
+          docker push ghcr.io/absurdlab/tigerd:${{ needs.prepare.outputs.VERSION }}
       - name: upload
         uses: actions/upload-artifact@v3
         with:

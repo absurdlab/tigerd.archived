@@ -39,6 +39,7 @@ dockers:
     goarm: 6
     goamd64: v1
     dockerfile: Dockerfile.CI
+    skip_push: true
     image_templates:
       - "ghcr.io/absurdlab/tigerd:latest"
       - "ghcr.io/absurdlab/tigerd:{{ .Env.VERSION }}"
