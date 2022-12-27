@@ -145,7 +145,16 @@ jobs:
         run: |
           docker push ghcr.io/absurdlab/tigerd:${{ needs.prepare.outputs.VERSION }}-amd64
           docker push ghcr.io/absurdlab/tigerd:${{ needs.prepare.outputs.VERSION }}-arm64v8
+      - name: create and push image manifest
+        run: |
+          docker manifest create ghcr.io/absurdlab/tigerd:${{ needs.prepare.outputs.VERSION }} \
+            ghcr.io/absurdlab/tigerd:${{ needs.prepare.outputs.VERSION }}-amd64 \
+            ghcr.io/absurdlab/tigerd:${{ needs.prepare.outputs.VERSION }}-arm64v8
+          docker manifest create ghcr.io/absurdlab/tigerd:latest \
+            ghcr.io/absurdlab/tigerd:${{ needs.prepare.outputs.VERSION }}-amd64 \
+            ghcr.io/absurdlab/tigerd:${{ needs.prepare.outputs.VERSION }}-arm64v8
           docker manifest push ghcr.io/absurdlab/tigerd:${{ needs.prepare.outputs.VERSION }}
+          docker manifest push ghcr.io/absurdlab/tigerd:latest
       - name: upload
         uses: actions/upload-artifact@v3
         with:
