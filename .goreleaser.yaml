@@ -4,8 +4,8 @@ project_name: tigerd
 
 before:
   hooks:
+    - buf generate
     - go mod tidy
-    - go generate ./...
 
 env:
   - VERSION={{ if index .Env "VERSION"  }}{{ .Env.VERSION }}{{ else }}{{ .ShortCommit }}{{ end }}

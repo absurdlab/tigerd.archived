@@ -106,7 +106,7 @@ jobs:
           github_token: ${{ secrets.PAT_TOKEN }}
       - name: prepare
         run: |
-          go mod tidy && go generate ./...
+          buf generate && go mod tidy
       - name: unit tests
         run: |
           go test --tags unit ./...
