@@ -143,7 +143,9 @@ jobs:
           password: ${{ secrets.PAT_TOKEN }}
       - name: push image
         run: |
-          docker push ghcr.io/absurdlab/tigerd:${{ needs.prepare.outputs.VERSION }}
+          docker push ghcr.io/absurdlab/tigerd:${{ needs.prepare.outputs.VERSION }}-amd64
+          docker push ghcr.io/absurdlab/tigerd:${{ needs.prepare.outputs.VERSION }}-arm64v8
+          docker manifest push ghcr.io/absurdlab/tigerd:${{ needs.prepare.outputs.VERSION }}
       - name: upload
         uses: actions/upload-artifact@v3
         with:
