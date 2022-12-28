@@ -2,11 +2,11 @@ name: default
 
 on:
   workflow_dispatch: {}
-  push:
-    branches:
-      - main
-    tags:
-      - v**
+#  push:
+#    branches:
+#      - main
+#    tags:
+#      - v**
 
 env:
   BUF_VERSION: "1.10.0"
