@@ -1,0 +1,62 @@
+project_name: tigerd
+
+env:
+  - VERSION={{ if index .Env "VERSION"  }}{{ .Env.VERSION }}{{ else }}{{ .ShortCommit }}{{ end }}
+
+builds:
+  - flags:
+      - -a
+      - -installsuffix
+      - cgo
+    ldflags:
+      - "-X github.com/absurdlab/tigerd/buildinfo.Version={{ .Env.VERSION }}"
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+
+dockers:
+  - image_templates:
+      - "ghcr.io/absurdlab/tigerd:{{ .Env.VERSION }}-amd64"
+    goarch: amd64
+    dockerfile: Dockerfile.CI
+    use: buildx
+    build_flag_templates:
+      - --platform=linux/amd64
+      - --label=org.opencontainers.image.title={{ .ProjectName }}
+      - --label=org.opencontainers.image.url=https://github.com/absurdlab/tigerd
+      - --label=org.opencontainers.image.source=https://github.com/absurdlab/tigerd
+      - --label=org.opencontainers.image.version={{ .Env.VERSION }}
+      - --label=org.opencontainers.image.revision={{ .FullCommit }}
+      - --label=org.opencontainers.image.licenses=MIT
+  - image_templates:
+      - "ghcr.io/absurdlab/tigerd:{{ .Env.VERSION }}-arm64v8"
+    goarch: arm64
+    dockerfile: Dockerfile.CI
+    use: buildx
+    build_flag_templates:
+      - --platform=linux/arm64/v8
+      - --label=org.opencontainers.image.title={{ .ProjectName }}
+      - --label=org.opencontainers.image.url=https://github.com/absurdlab/tigerd
+      - --label=org.opencontainers.image.source=https://github.com/absurdlab/tigerd
+      - --label=org.opencontainers.image.version={{ .Env.VERSION }}
+      - --label=org.opencontainers.image.revision={{ .FullCommit }}
+      - --label=org.opencontainers.image.licenses=MIT
+
+docker_manifests:
+  - name_template: ghcr.io/absurdlab/tigerd:{{ .Env.VERSION }}
+    image_templates:
+      - "ghcr.io/absurdlab/tigerd:{{ .Env.VERSION }}-amd64"
+      - "ghcr.io/absurdlab/tigerd:{{ .Env.VERSION }}-arm64v8"
+  - name_template: ghcr.io/absurdlab/tigerd:latest
+    image_templates:
+      - "ghcr.io/absurdlab/tigerd:{{ .Env.VERSION }}-amd64"
+      - "ghcr.io/absurdlab/tigerd:{{ .Env.VERSION }}-arm64v8"
+
+
+# modelines, feel free to remove those if you don't want/use them:
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
