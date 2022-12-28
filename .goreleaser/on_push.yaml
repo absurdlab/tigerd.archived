@@ -56,6 +56,11 @@ docker_manifests:
       - "ghcr.io/absurdlab/tigerd:{{ .Env.VERSION }}-amd64"
       - "ghcr.io/absurdlab/tigerd:{{ .Env.VERSION }}-arm64v8"
 
+release:
+  disable: true
+
+announce:
+  skip: true
 
 # modelines, feel free to remove those if you don't want/use them:
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json
